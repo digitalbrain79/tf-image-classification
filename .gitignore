@@ -2,3 +2,5 @@ MNIST_data
 cifar10_data
 images
 log
+summary
+*.pyc
