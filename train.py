@@ -2,6 +2,7 @@ import tensorflow as tf
 import config
 import model
 import input
+import eval
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -14,12 +15,16 @@ def train():
 
     hypothesis, cross_entropy, train_step = model.make_network(x, y)
 
-    init = tf.initialize_all_variables()
-
     sess = tf.Session()
     merged = tf.merge_all_summaries()
     train_writer = tf.train.SummaryWriter(FLAGS.train_summary_dir, sess.graph)
-    sess.run(init)
+    saver = tf.train.Saver()
+
+    if tf.gfile.Exists(FLAGS.checkpoint_dir + '/model.ckpt'):
+        saver.restore(sess, FLAGS.checkpoint_dir + '/model.ckpt')
+    else:
+        init = tf.initialize_all_variables()
+        sess.run(init)
 
     min = 0
     max = FLAGS.batch_size
@@ -34,10 +39,17 @@ def train():
             min = 0
             max = FLAGS.batch_size
 
+        if step % 100 == 0 or (step + 1) == FLAGS.max_steps:
+            saver.save(sess, FLAGS.checkpoint_dir + '/model.ckpt')
+
 def main(argv = None):
     if tf.gfile.Exists(FLAGS.train_summary_dir):
         tf.gfile.DeleteRecursively(FLAGS.train_summary_dir)
     tf.gfile.MakeDirs(FLAGS.train_summary_dir)
+
+    if tf.gfile.Exists(FLAGS.checkpoint_dir) == False:
+        tf.gfile.MakeDirs(FLAGS.checkpoint_dir)
+
     train()
 
 if __name__ == '__main__':

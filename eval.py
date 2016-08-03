@@ -8,15 +8,21 @@ FLAGS = tf.app.flags.FLAGS
 
 def eval():
     x_data, y_data = input.get_data()
-    x = tf.placeholder("float", [None, FLAGS.height * FLAGS.width * FLAGS.depth])
-    y = tf.placeholder("float", [None, FLAGS.num_class])
+
+    with tf.name_scope('input'):
+        x = tf.placeholder("float", [None, FLAGS.height * FLAGS.width * FLAGS.depth], name='x-input')
+        y = tf.placeholder("float", [None, FLAGS.num_class], name='y-input')
 
     hypothesis, cross_entropy, train_step = model.make_network(x, y)
 
-    init = tf.initialize_all_variables()
-
     sess = tf.Session()
-    sess.run(init)
+    saver = tf.train.Saver()
+
+    if tf.gfile.Exists(FLAGS.checkpoint_dir + '/model.ckpt'):
+        saver.restore(sess, FLAGS.checkpoint_dir + '/model.ckpt')
+    else:
+        print 'Cannot find checkpoint file: ' + FLAGS.checkpoint_dir + '/model.ckpt'
+        return
 
     test_data = x_data
     for i in range(FLAGS.num_samples):

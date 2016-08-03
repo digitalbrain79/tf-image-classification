@@ -13,5 +13,8 @@ tf.app.flags.DEFINE_integer('num_fc', 256, '')
 tf.app.flags.DEFINE_integer('max_steps', 100, '')
 tf.app.flags.DEFINE_integer('batch_size', 10, '')
 tf.app.flags.DEFINE_float('learning_rate', 0.0001, '')
+
 tf.app.flags.DEFINE_string('train_summary_dir', './summary/train', '')
 tf.app.flags.DEFINE_string('eval_summary_dir', './summary/eval', '')
+tf.app.flags.DEFINE_string('image_dir', './images', '')
+tf.app.flags.DEFINE_string('checkpoint_dir', './checkpoint', '')

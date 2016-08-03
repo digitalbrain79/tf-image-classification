@@ -3,4 +3,5 @@ cifar10_data
 images
 log
 summary
+checkpoint
 *.pyc

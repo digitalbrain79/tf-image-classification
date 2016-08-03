@@ -1,5 +1,7 @@
+import os
 import tensorflow as tf
 import numpy as np
+import config
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -17,3 +19,9 @@ def get_data():
     x_data = x_data.reshape(FLAGS.num_samples, array_size)
 
     return x_data, y_data
+
+def main(argv = None):
+    get_data()
+
+if __name__ == '__main__':
+    tf.app.run()
