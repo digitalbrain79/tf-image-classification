@@ -50,6 +50,6 @@ def make_network(x, y):
     with tf.name_scope('cross_entropy'):
         cross_entropy = tf.reduce_mean(-tf.reduce_sum(y * tf.log(hypothesis), reduction_indices=[1]))
         tf.scalar_summary('cross entropy', cross_entropy)
-    train_step = tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(cross_entropy)
+    train_step = tf.train.RMSPropOptimizer(FLAGS.learning_rate).minimize(cross_entropy)
 
     return hypothesis, cross_entropy, train_step

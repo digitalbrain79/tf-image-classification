@@ -7,8 +7,6 @@ import eval
 FLAGS = tf.app.flags.FLAGS
 
 def train():
-    x_data, y_data = input.get_data()
-
     with tf.name_scope('input'):
         x = tf.placeholder("float", [None, FLAGS.height * FLAGS.width * FLAGS.depth], name='x-input')
         y = tf.placeholder("float", [None, FLAGS.num_class], name='y-input')
@@ -26,18 +24,11 @@ def train():
         init = tf.initialize_all_variables()
         sess.run(init)
 
-    min = 0
-    max = FLAGS.batch_size
-
     for step in range(FLAGS.max_steps):
-        summary, _ = sess.run([merged, train_step], feed_dict={x: x_data[min:max], y: y_data[min:max]})
+        x_data, y_data = input.get_data(sess, 'train')
+        summary, _ = sess.run([merged, train_step], feed_dict={x: x_data, y: y_data})
         train_writer.add_summary(summary, step)
         print step, sess.run(cross_entropy, feed_dict={x: x_data, y: y_data})
-        min += FLAGS.batch_size
-        max += FLAGS.batch_size
-        if (max > FLAGS.num_samples):
-            min = 0
-            max = FLAGS.batch_size
 
         if step % 100 == 0 or (step + 1) == FLAGS.max_steps:
             saver.save(sess, FLAGS.checkpoint_dir + '/model.ckpt')

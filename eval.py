@@ -7,7 +7,7 @@ import input
 FLAGS = tf.app.flags.FLAGS
 
 def eval():
-    x_data, y_data = input.get_data()
+    x_data, y_data = input.get_data('eval')
 
     with tf.name_scope('input'):
         x = tf.placeholder("float", [None, FLAGS.height * FLAGS.width * FLAGS.depth], name='x-input')
@@ -24,16 +24,10 @@ def eval():
         print 'Cannot find checkpoint file: ' + FLAGS.checkpoint_dir + '/model.ckpt'
         return
 
-    test_data = x_data
-    for i in range(FLAGS.num_samples):
-        for j in range(FLAGS.height * FLAGS.width * FLAGS.depth):
-            if (j % 5 == 0):
-                test_data[i][j] = 0
-
     prediction = tf.equal(tf.argmax(hypothesis, 1), tf.argmax(y, 1))
     accuracy = tf.reduce_mean(tf.cast(prediction, tf.float32))
     start = datetime.datetime.now()
-    result = sess.run(accuracy, feed_dict={x: test_data, y: y_data})
+    result = sess.run(accuracy, feed_dict={x: x_data, y: y_data})
     delta = datetime.datetime.now() - start
 
     print 'accuracy: %f' % result
