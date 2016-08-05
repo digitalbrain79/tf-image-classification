@@ -7,36 +7,38 @@ import input
 FLAGS = tf.app.flags.FLAGS
 
 def eval():
-    x_data, y_data = input.get_data('eval')
-
     with tf.name_scope('input'):
         x = tf.placeholder("float", [None, FLAGS.height * FLAGS.width * FLAGS.depth], name='x-input')
         y = tf.placeholder("float", [None, FLAGS.num_class], name='y-input')
+        keep_prob = tf.placeholder(tf.float32)
 
-    hypothesis, cross_entropy, train_step = model.make_network(x, y)
+    hypothesis, cross_entropy, train_step = model.make_network(x, y, keep_prob)
 
-    sess = tf.Session()
-    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        saver = tf.train.Saver()
 
-    if tf.gfile.Exists(FLAGS.checkpoint_dir + '/model.ckpt'):
-        saver.restore(sess, FLAGS.checkpoint_dir + '/model.ckpt')
-    else:
-        print 'Cannot find checkpoint file: ' + FLAGS.checkpoint_dir + '/model.ckpt'
-        return
+        if tf.gfile.Exists(FLAGS.checkpoint_dir + '/model.ckpt'):
+            saver.restore(sess, FLAGS.checkpoint_dir + '/model.ckpt')
+        else:
+            print 'Cannot find checkpoint file: ' + FLAGS.checkpoint_dir + '/model.ckpt'
+            return
 
-    prediction = tf.equal(tf.argmax(hypothesis, 1), tf.argmax(y, 1))
-    accuracy = tf.reduce_mean(tf.cast(prediction, tf.float32))
-    start = datetime.datetime.now()
-    result = sess.run(accuracy, feed_dict={x: x_data, y: y_data})
-    delta = datetime.datetime.now() - start
+        accuracy = 0
+        delta = datetime.timedelta()
+        max_steps = 10
 
-    print 'accuracy: %f' % result
-    print 'evaluation time: %f seconds' % (delta.seconds + delta.microseconds / 1E6)
+        for i in range(0, max_steps):
+            x_data, y_data = input.get_data(sess, 'eval', FLAGS.batch_size)
+            prediction = tf.equal(tf.argmax(hypothesis, 1), tf.argmax(y, 1))
+            accuracy += tf.reduce_mean(tf.cast(prediction, tf.float32))
+            start = datetime.datetime.now()
+            result = sess.run(accuracy, feed_dict={x: x_data, y: y_data, keep_prob: 1.0})
+            delta += datetime.datetime.now() - start
+
+    print 'accuracy: %f' % (result / max_steps)
+    print 'evaluation time: %f seconds' % ((delta.seconds + delta.microseconds / 1E6) / max_steps)
 
 def main(argv = None):
-    if tf.gfile.Exists(FLAGS.eval_summary_dir):
-        tf.gfile.DeleteRecursively(FLAGS.eval_summary_dir)
-    tf.gfile.MakeDirs(FLAGS.eval_summary_dir)
     eval()
 
 if __name__ == '__main__':
