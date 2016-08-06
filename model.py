@@ -3,15 +3,15 @@ import tensorflow as tf
 FLAGS = tf.app.flags.FLAGS
 
 def weight_variable(shape, name):
-    with tf.device('/cpu:0'):
-        initial = tf.truncated_normal(shape, stddev=0.1)
-        var = tf.Variable(initial, name=name)
+    #with tf.device('/cpu:0'):
+    initial = tf.truncated_normal(shape, stddev=0.1)
+    var = tf.Variable(initial, name=name)
     return var
 
 def bias_variable(shape, name):
-    with tf.device('/cpu:0'):
-        initial = tf.constant(0.1, shape=shape)
-        var = tf.Variable(initial, name=name)
+    #with tf.device('/cpu:0'):
+    initial = tf.constant(0.1, shape=shape)
+    var = tf.Variable(initial, name=name)
     return var
 
 def conv2d(x, W):
