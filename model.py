@@ -3,16 +3,12 @@ import tensorflow as tf
 FLAGS = tf.app.flags.FLAGS
 
 def weight_variable(shape, name):
-    #with tf.device('/cpu:0'):
     initial = tf.truncated_normal(shape, stddev=0.1)
-    var = tf.Variable(initial, name=name)
-    return var
+    return tf.Variable(initial, name=name)
 
 def bias_variable(shape, name):
-    #with tf.device('/cpu:0'):
     initial = tf.constant(0.1, shape=shape)
-    var = tf.Variable(initial, name=name)
-    return var
+    return tf.Variable(initial, name=name)
 
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
@@ -20,11 +16,7 @@ def conv2d(x, W):
 def max_pool(x, height, width):
     return tf.nn.max_pool(x, ksize=[1, height, width, 1], strides=[1, height, width, 1], padding='SAME')
 
-def make_network(x, y, keep_prob):
-    with tf.name_scope('input_reshape'):
-        x_image = tf.reshape(x, [-1, FLAGS.height, FLAGS.width, FLAGS.depth])
-        tf.image_summary('input', x_image, FLAGS.num_class)
-
+def make_network(images, labels, keep_prob):
     num_conv = FLAGS.num_conv
     kernel_size = FLAGS.kernel_size
     pool_size = FLAGS.pool_size
@@ -35,7 +27,7 @@ def make_network(x, y, keep_prob):
     height = FLAGS.height
     width = FLAGS.width
     prev_num_map = FLAGS.depth
-    h_pool = x_image
+    h_pool = images
 
     for i in range(num_conv):
         W_conv = weight_variable([kernel_size, kernel_size, prev_num_map, num_map], 'W_conv' + str(i+1))
@@ -63,11 +55,8 @@ def make_network(x, y, keep_prob):
     W_fc = weight_variable([num_fc_input, FLAGS.num_class], 'W_fc' + str(i+2))
     b_fc = bias_variable([FLAGS.num_class], 'b_fc' + str(i+2))
 
-    hypothesis = tf.nn.log_softmax(tf.matmul(h_fc_input, W_fc) + b_fc)
-
-    with tf.name_scope('cross_entropy'):
-        cross_entropy = tf.reduce_mean(-tf.reduce_sum(y * hypothesis, reduction_indices=[1]))
-        tf.scalar_summary('cross entropy', cross_entropy)
+    hypothesis = tf.nn.sparse_softmax_cross_entropy_with_logits(tf.matmul(h_fc_input, W_fc) + b_fc, labels)
+    cross_entropy = tf.reduce_mean(hypothesis)
     train_step = tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(cross_entropy)
 
-    return hypothesis, cross_entropy, train_step
+    return cross_entropy, train_step

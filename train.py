@@ -7,17 +7,12 @@ import eval
 FLAGS = tf.app.flags.FLAGS
 
 def train():
-    with tf.name_scope('input'):
-        x = tf.placeholder("float", [None, FLAGS.height * FLAGS.width * FLAGS.depth], name='x-input')
-        y = tf.placeholder("float", [None, FLAGS.num_class], name='y-input')
-        keep_prob = tf.placeholder(tf.float32)
-
-    hypothesis, cross_entropy, train_step = model.make_network(x, y, keep_prob)
+    keep_prob = tf.placeholder(tf.float32)
+    images, labels = input.get_data('train', FLAGS.batch_size)
+    cross_entropy, train_step = model.make_network(images, labels, keep_prob)
 
     with tf.Session() as sess:
         saver = tf.train.Saver()
-        merged = tf.merge_all_summaries()
-        train_writer = tf.train.SummaryWriter(FLAGS.summary_dir + '/train', sess.graph)
 
         if tf.gfile.Exists(FLAGS.checkpoint_dir + '/model.ckpt'):
             saver.restore(sess, FLAGS.checkpoint_dir + '/model.ckpt')
@@ -25,21 +20,16 @@ def train():
             init = tf.initialize_all_variables()
             sess.run(init)
 
+        tf.train.start_queue_runners(sess=sess)
+
         for step in range(FLAGS.max_steps):
-            x_data, y_data = input.get_data(sess, 'train', FLAGS.batch_size)
-            if (x_data is None or y_data is None): continue
-            summary, _ = sess.run([merged, train_step], feed_dict={x: x_data, y: y_data, keep_prob: 0.7})
-            train_writer.add_summary(summary, step)
-            print step, sess.run(cross_entropy, feed_dict={x: x_data, y: y_data, keep_prob: 1.0})
+            sess.run(train_step, feed_dict={keep_prob: 0.7})
+            print step, sess.run(cross_entropy, feed_dict={keep_prob: 1.0})
 
             if step % 100 == 0 or (step + 1) == FLAGS.max_steps:
                 saver.save(sess, FLAGS.checkpoint_dir + '/model.ckpt')
 
 def main(argv = None):
-    if tf.gfile.Exists(FLAGS.summary_dir + '/train'):
-        tf.gfile.DeleteRecursively(FLAGS.summary_dir + '/train')
-    tf.gfile.MakeDirs(FLAGS.summary_dir + '/train')
-
     if tf.gfile.Exists(FLAGS.checkpoint_dir) == False:
         tf.gfile.MakeDirs(FLAGS.checkpoint_dir)
 
