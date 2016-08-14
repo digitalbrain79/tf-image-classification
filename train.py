@@ -9,7 +9,7 @@ FLAGS = tf.app.flags.FLAGS
 def train():
     keep_prob = tf.placeholder(tf.float32)
     images, labels = input.get_data('train', FLAGS.batch_size)
-    cross_entropy, train_step = model.make_network(images, labels, keep_prob)
+    hypothesis, cross_entropy, train_step = model.make_network(images, labels, keep_prob)
 
     with tf.Session() as sess:
         saver = tf.train.Saver()

@@ -29,15 +29,15 @@ def get_filename_set(data_set):
 def read_jpeg(filename):
     value = tf.read_file(filename)
     decoded_image = tf.image.decode_jpeg(value, channels=FLAGS.depth)
-    resized_image = tf.image.resize_images(decoded_image, FLAGS.height, FLAGS.width)
+    resized_image = tf.image.resize_images(decoded_image, FLAGS.raw_height, FLAGS.raw_width)
     resized_image = tf.cast(resized_image, tf.uint8)
 
     return resized_image
 
-def convert_images(sess):
-    filename_set = get_filename_set('train')
+def convert_images(sess, data_set):
+    filename_set = get_filename_set(data_set)
 
-    with open('./data/train_data.bin', 'wb') as f:
+    with open('./data/' + data_set + '_data.bin', 'wb') as f:
         for i in range(0, len(filename_set)):
             resized_image = read_jpeg(filename_set[i][1])
 
@@ -47,36 +47,37 @@ def convert_images(sess):
                 print e.message
                 continue
 
-            #plt.imshow(np.reshape(image.data, [FLAGS.height, FLAGS.width, FLAGS.depth]))
+            #plt.imshow(np.reshape(image.data, [FLAGS.raw_height, FLAGS.raw_width, FLAGS.depth]))
             #plt.show()
 
             print i, filename_set[i][0], image.shape
             f.write(chr(filename_set[i][0]))
             f.write(image.data)
 
-def read_raw_images(sess):
-    filename = ['./data/train_data.bin']
+def read_raw_images(sess, data_set):
+    filename = ['./data/' + data_set + '_data.bin']
     filename_queue = tf.train.string_input_producer(filename)
 
-    record_bytes = FLAGS.height * FLAGS.width * FLAGS.depth + 1
+    record_bytes = (FLAGS.raw_height) * (FLAGS.raw_width) * FLAGS.depth + 1
     reader = tf.FixedLengthRecordReader(record_bytes=record_bytes)
     key, value = reader.read(filename_queue)
     record_bytes = tf.decode_raw(value, tf.uint8)
 
     tf.train.start_queue_runners(sess=sess)
 
-    for i in range(0, 10):
+    for i in range(0, 100):
         result = sess.run(record_bytes)
         print i, result[0]
         image = result[1:len(result)]
 
-        #plt.imshow(np.reshape(image, [FLAGS.height, FLAGS.width, FLAGS.depth]))
+        #plt.imshow(np.reshape(image, [FLAGS.raw_height, FLAGS.raw_width, FLAGS.depth]))
         #plt.show()
 
 def main(argv = None):
     with tf.Session() as sess:
-        #convert_images(sess)
-        read_raw_images(sess)
+        convert_images(sess, 'train')
+        convert_images(sess, 'eval')
+        #read_raw_images(sess, 'eval')
 
 if __name__ == '__main__':
     tf.app.run()

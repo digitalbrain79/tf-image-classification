@@ -3,12 +3,16 @@ import tensorflow as tf
 FLAGS = tf.app.flags.FLAGS
 
 def weight_variable(shape, name):
-    initial = tf.truncated_normal(shape, stddev=0.1)
-    return tf.Variable(initial, name=name)
+    with tf.device('/cpu:0'):
+        initial = tf.truncated_normal(shape, stddev=0.1)
+        var = tf.Variable(initial, name=name)
+    return var
 
 def bias_variable(shape, name):
-    initial = tf.constant(0.1, shape=shape)
-    return tf.Variable(initial, name=name)
+    with tf.device('/cpu:0'):
+        initial = tf.constant(0.1, shape=shape)
+        var = tf.Variable(initial, name=name)
+    return var
 
 def conv2d(x, W):
     return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
@@ -55,8 +59,8 @@ def make_network(images, labels, keep_prob):
     W_fc = weight_variable([num_fc_input, FLAGS.num_class], 'W_fc' + str(i+2))
     b_fc = bias_variable([FLAGS.num_class], 'b_fc' + str(i+2))
 
-    hypothesis = tf.nn.sparse_softmax_cross_entropy_with_logits(tf.matmul(h_fc_input, W_fc) + b_fc, labels)
-    cross_entropy = tf.reduce_mean(hypothesis)
+    hypothesis = tf.matmul(h_fc_input, W_fc) + b_fc
+    cross_entropy = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(hypothesis, labels))
     train_step = tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(cross_entropy)
 
-    return cross_entropy, train_step
+    return hypothesis, cross_entropy, train_step
